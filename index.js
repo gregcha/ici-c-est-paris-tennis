@@ -6,7 +6,7 @@ const config = require('./config.json')
 dayjs.extend(customParseFormat)
 
 const bookTennis = async () => {
-  console.log(`${dayjs().format()} - Starting searching tennis`)
+  console.log(`${dayjs().format()} - Start process`)
   const browser = await chromium.launch({ headless: true, slowMo: 10, timeout: 120000 })
 
   console.log(`${dayjs().format()} - Browser started`)
@@ -27,89 +27,77 @@ const bookTennis = async () => {
   await new Promise(r => setTimeout(r, 500));
 
   try {
-    for (const location of config.locations) {
-      console.log(`${dayjs().format()} - Search at ${location}`)
-      await page.goto('https://tennis.paris.fr/tennis/jsp/site/Portal.jsp?page=recherche&view=recherche_creneau#!')
 
-      // select tennis location
-      await page.type('.tokens-input-text', location)
-      await new Promise(r => setTimeout(r, 300));
-      await page.press('.tokens-input-text', 'ArrowDown');
-      await page.press('.tokens-input-text', 'Enter');
+    // Cancel previous booking if any
+    await page.goto('https://tennis.paris.fr/tennis/jsp/site/Portal.jsp?page=profil&view=ma_reservation')
+    if (await page.$('#annuler')) {
+      await page.click('#annuler');
+      await page.click('#confirmer');
+      console.log(`${dayjs().format()} - Previous booking canceled`)
+    } else {
+      console.log(`${dayjs().format()} - No booking to cancel`)
+    }
 
-      // select date
-      await page.click('#when')
-      await new Promise(r => setTimeout(r, 1000));
-      const date = dayjs(config.date, 'D/MM/YYYY')
-      await page.click(`[dateiso="${date.format('DD/MM/YYYY')}"]`)
-      await new Promise(r => setTimeout(r, 300));
+    // Visit search form
+    await page.goto('https://tennis.paris.fr/tennis/jsp/site/Portal.jsp?page=recherche&view=recherche_creneau#!')
+    await new Promise(r => setTimeout(r, 1000));
+    console.log(`${dayjs().format()} - Search page loaded`)
 
-      await page.click('#rechercher')
+    // Select tennis location
+    await page.type('.tokens-input-text', config.location);
+    await new Promise(r => setTimeout(r, 5000));
+    await page.press('.tokens-input-text', 'ArrowDown');
+    await new Promise(r => setTimeout(r, 5000));
+    await page.press('.tokens-input-text', 'Enter');
+    await new Promise(r => setTimeout(r, 300));
+    console.log(`${dayjs().format()} - Location filled`)
 
-      hoursLoop:
-      for (const hour of config.hours) {
-        const dateDeb = `[datedeb="${date.format('YYYY/MM/DD')} ${hour}:00:00"]`
-        if (await page.$(dateDeb)) {
-          if (await page.isHidden(dateDeb)) {
-            await page.click(`#head${location.replaceAll(' ', '')}${hour}h .panel-title`)
-          }
+    // Select date
+    await page.click('#when')
+    await new Promise(r => setTimeout(r, 5000));
+    const date = dayjs(config.date, 'DD/MM/YYYY')
+    await page.click(`[dateiso="${date.format('DD/MM/YYYY')}"]`)
+    await new Promise(r => setTimeout(r, 300));
+    console.log(`${dayjs().format()} - Date filled`)
 
-          const slots = await page.$$(dateDeb)
-          for (const slot of slots) {
-            const bookSlotButton = `[courtid="${await slot.getAttribute('courtid')}"]${dateDeb}`
-            const [priceType, courtType] = await (
-              await (await page.$(`.price-description:left-of(${bookSlotButton})`)).innerHTML()
-            ).split('<br>')
-            if (!config.priceType.includes(priceType) || !config.courtType.includes(courtType)) {
-              continue
-            }
-            await page.click(bookSlotButton)
+    // Search availabilities
+    await page.click('#rechercher')
+    console.log(`${dayjs().format()} - Searching at ${config.location}`)
 
-            break hoursLoop
-          }
-        }
-      }
+    // Show results
+    const dateDeb = `[datedeb="${date.format('YYYY/MM/DD')} ${config.hour}:00:00"]`
+    await page.click(`#head${config.location.replaceAll(' ', '')}${config.hour}h .panel-title`)
 
-      if (await page.title() !== 'Paris | TENNIS - Reservation') {
-        console.log(`${dayjs().format()} - Failed to find reservation for ${location}`)
-        continue
-      }
+    // Hit booking button
+    const bookSlotButton = `[courtid="${config.court_id}"]${dateDeb}`
+    await page.click(bookSlotButton)
+    await new Promise(r => setTimeout(r, 300));
 
-      for (const [i, player] of config.players.entries()) {
-        if (i < config.players.length - 1) {
-          await page.click('.addPlayer')
-        }
-      }
-      await new Promise(r => setTimeout(r, 100));
+    // Fill player
+    await page.locator(`[name="player1"] >> nth=0`).fill(config.player.lastName);
+    await page.locator(`[name="player1"] >> nth=1`).fill(config.player.firstName);
+    await page.keyboard.press('Enter');
 
-      for (const [i, player] of config.players.entries()) {
-        await page.fill(`[name="player${i + 1}"] >> nth=0`, player.lastName)
-        await page.fill(`[name="player${i + 1}"] >> nth=1`, player.firstName)
-      }
+    // Pick payment option
+    await page.click('[paymentmode="existingTicket"]')
 
-      await page.keyboard.press('Enter');
+    // Submit booking
+    await page.click('#submit')
+    await new Promise(r => setTimeout(r, 100));
 
-      await page.click('[paymentmode="existingTicket"]')
-
-      await page.click('#submit')
-
-      await new Promise(r => setTimeout(r, 100));
-
-      if (await page.$('.confirmReservation')) {
-        console.log(`${dayjs().format()} - Réservation faite : ${await (
-          await (await page.$('.address')).textContent()
-        ).trim().replace(/( ){2,}/g, ' ')}`)
-        console.log(`pour le ${await (
-          await (await page.$('.date')).textContent()
-        ).trim().replace(/( ){2,}/g, ' ')}`)
-        break
-      }
+    // Confirm booking
+    if (await page.$('.confirmReservation')) {
+      console.log(`${dayjs().format()} - Booking confirmed : ${await (
+        await (await page.$('.address')).textContent()
+      ).trim().replace(/( ){2,}/g, ' ')}`)
+      console.log(`pour le ${await (
+        await (await page.$('.date')).textContent()
+      ).trim().replace(/( ){2,}/g, ' ')}`)
     }
   } catch (e) {
     console.log(e);
     await page.screenshot({ path: 'failure.png' });
   }
-
   await browser.close()
 }
 

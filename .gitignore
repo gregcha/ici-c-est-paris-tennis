@@ -1,3 +1,6 @@
 node_modules/
+index-old.js
 config.json
+config-old.json
+config-old.json.sample
 failure.png
