@@ -1,4 +1,4 @@
-# par-ici-tennis (*Paris i tennis*)
+# ici-c-est-paris-tennis (*Ici c'est Paris Tennis*)
 
 Script to automatically book a tennis court (on https://tennis.paris.fr)
 
