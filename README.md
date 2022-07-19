@@ -1,12 +1,13 @@
 # Ici c'est Paris Tennis
 
 Script to automatically book a tennis court (on https://tennis.paris.fr)
+
 Credit goes to [Bertrand d'Aure](https://github.com/bertrandda) who built [par-ici-tennis](https://github.com/bertrandda/par-ici-tennis) in the first place.
 
 ## Get started
 Create `config.json` file from `config.json.sample` and complete with your preferences.
 
-`location` a string representing the name of the court - [full list](https://tennis.paris.fr/tennis/jsp/site/Portal.jsp?page=tennisParisien&view=les_tennis_parisiens)
+`location` a string representing the name of the court — [full list](https://airtable.com/shrNCuXYBTcjQBg7X)
 
 `date` a string representing a date formated DD/MM/YYYY
 
