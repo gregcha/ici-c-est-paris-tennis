@@ -9,9 +9,9 @@ Create `config.json` file from `config.json.sample` and complete with your prefe
 
 `location` a string representing the name of the court — [full list](https://airtable.com/shrNCuXYBTcjQBg7X)
 
-`date` a string representing a date formated DD/MM/YYYY
+`date` a string representing a date formated DD/MM/YYYY — eg: "24/11/2022"
 
-`hour` a string representing the starting hour
+`hour` a string representing the starting hour formated HH — eg: "08"
 
 `court_id` a string representing the court ID — [find Court ID here](https://airtable.com/shrH4BCvssntJn9oB/tblMzdkwf9fNEztGy)
 
