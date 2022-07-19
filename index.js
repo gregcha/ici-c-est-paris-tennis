@@ -66,7 +66,9 @@ const bookTennis = async () => {
 
     // Show results
     const dateDeb = `[datedeb="${date.format('YYYY/MM/DD')} ${config.hour}:00:00"]`
-    await page.click(`#head${config.location.replaceAll(' ', '')}${config.hour}h .panel-title`)
+    if (await page.isHidden(dateDeb)) {
+      await page.click(`#head${config.location.replaceAll(' ', '')}${config.hour}h .panel-title`)
+    }
 
     // Hit booking button
     const bookSlotButton = `[courtid="${config.court_id}"]${dateDeb}`
