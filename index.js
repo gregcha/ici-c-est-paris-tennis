@@ -75,16 +75,20 @@ const bookTennis = async () => {
 
     // Hit booking button
     const bookSlotButton = `[courtid="${config.court_id}"]${dateDeb}`
-    await page.click(bookSlotButton)
-    await new Promise(r => setTimeout(r, 300));
+    if (await page.locator(bookSlotButton).count() > 0) {
+      await page.click(bookSlotButton)
+      await new Promise(r => setTimeout(r, 300));
+    } else {
+      console.log(`${dayjs().format('HH:mm:ss')} - Court not available 🔴`)
+    }
 
     // Fill player
     await page.locator(`[name="player1"] >> nth=0`).fill(config.player.lastName);
     await page.locator(`[name="player1"] >> nth=1`).fill(config.player.firstName);
     await page.keyboard.press('Enter');
 
-    // Pick payment option
-    await page.click('[paymentmode="existingTicket"]')
+    // Select payment option
+    await page.locator('.price-item >> nth=0').click();
 
     // Book the fucking court
     await page.click('#submit')
@@ -92,7 +96,7 @@ const bookTennis = async () => {
 
     // Confirm message
     if (await page.$('.confirmReservation')) {
-      console.log(`${dayjs().format('HH:mm:ss')} - Booking confirmed`)
+      console.log(`${dayjs().format('HH:mm:ss')} - Booking confirmed 🎾`)
       console.log('--------------------------------')
       console.log(`${await (await (await page.$('.address')).textContent()
       ).trim().replace(/( ){2,}/g, '')}`)
