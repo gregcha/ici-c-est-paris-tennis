@@ -6,10 +6,10 @@ const config = require('./config.json')
 dayjs.extend(customParseFormat)
 
 const bookTennis = async () => {
-  console.log(`${dayjs().format()} - Start process`)
+  console.log(`${dayjs().format('HH:mm:ss')} - Start process`)
   const browser = await chromium.launch({ headless: true, slowMo: 10, timeout: 120000 })
 
-  console.log(`${dayjs().format()} - Browser started`)
+  console.log(`${dayjs().format('HH:mm:ss')} - Browser started`)
   const page = await browser.newPage()
   await page.goto('https://tennis.paris.fr/tennis/jsp/site/Portal.jsp?page=tennis&view=start&full=1')
 
@@ -22,49 +22,52 @@ const bookTennis = async () => {
   await popup.fill('#password-login', config.account.password)
   await popup.click('section >> button')
 
-  console.log(`${dayjs().format()} - User connected`)
+  console.log(`${dayjs().format('HH:mm:ss')} - User connected`)
 
   await new Promise(r => setTimeout(r, 500));
 
   try {
 
-    // Cancel previous booking if any
+    // Cancel active booking if any
     await page.goto('https://tennis.paris.fr/tennis/jsp/site/Portal.jsp?page=profil&view=ma_reservation')
     if (await page.$('#annuler')) {
       await page.click('#annuler');
       await page.click('#confirmer');
-      console.log(`${dayjs().format()} - Previous booking canceled`)
-    } else {
-      console.log(`${dayjs().format()} - No booking to cancel`)
+      console.log(`${dayjs().format('HH:mm:ss')} - Booking canceled`)
     }
 
-    // Visit search form
+    // Go to search form
     await page.goto('https://tennis.paris.fr/tennis/jsp/site/Portal.jsp?page=recherche&view=recherche_creneau#!')
     await new Promise(r => setTimeout(r, 1000));
-    console.log(`${dayjs().format()} - Search page loaded`)
 
-    // Select tennis location
+    // Cancel active option if any
+    if (await page.$('#precedent')) {
+      await page.click('#precedent');
+      await page.click('#btnCancelBooking');
+      console.log(`${dayjs().format('HH:mm:ss')} - Option canceled`)
+    }
+    await new Promise(r => setTimeout(r, 300));
+    console.log(`${dayjs().format('HH:mm:ss')} - Search page loaded`)
+
+    // Select location
     await page.type('.tokens-input-text', config.location);
-    await new Promise(r => setTimeout(r, 5000));
+    await new Promise(r => setTimeout(r, 1000));
     await page.press('.tokens-input-text', 'ArrowDown');
-    await new Promise(r => setTimeout(r, 5000));
     await page.press('.tokens-input-text', 'Enter');
     await new Promise(r => setTimeout(r, 300));
-    console.log(`${dayjs().format()} - Location filled`)
+    console.log(`${dayjs().format('HH:mm:ss')} - Location filled`)
 
     // Select date
     await page.click('#when')
-    await new Promise(r => setTimeout(r, 5000));
+    await new Promise(r => setTimeout(r, 1000));
     const date = dayjs(config.date, 'DD/MM/YYYY')
     await page.click(`[dateiso="${date.format('DD/MM/YYYY')}"]`)
     await new Promise(r => setTimeout(r, 300));
-    console.log(`${dayjs().format()} - Date filled`)
-
-    // Search availabilities
-    await page.click('#rechercher')
-    console.log(`${dayjs().format()} - Searching at ${config.location}`)
+    console.log(`${dayjs().format('HH:mm:ss')} - Date filled`)
 
     // Show results
+    await page.click('#rechercher')
+    console.log(`${dayjs().format('HH:mm:ss')} - Searching at ${config.location}`)
     const dateDeb = `[datedeb="${date.format('YYYY/MM/DD')} ${config.hour}:00:00"]`
     if (await page.isHidden(dateDeb)) {
       await page.click(`#head${config.location.replaceAll(' ', '')}${config.hour}h .panel-title`)
@@ -83,17 +86,17 @@ const bookTennis = async () => {
     // Pick payment option
     await page.click('[paymentmode="existingTicket"]')
 
-    // Submit booking
+    // Book the fucking court
     await page.click('#submit')
     await new Promise(r => setTimeout(r, 100));
 
-    // Confirm booking
+    // Confirm message
     if (await page.$('.confirmReservation')) {
-      console.log(`${dayjs().format()} - Booking confirmed : ${await (
-        await (await page.$('.address')).textContent()
-      ).trim().replace(/( ){2,}/g, ' ')}`)
-      console.log(`pour le ${await (
-        await (await page.$('.date')).textContent()
+      console.log(`${dayjs().format('HH:mm:ss')} - Booking confirmed`)
+      console.log('--------------------------------')
+      console.log(`${await (await (await page.$('.address')).textContent()
+      ).trim().replace(/( ){2,}/g, '')}`)
+      console.log(`${await (await (await page.$('.date')).textContent()
       ).trim().replace(/( ){2,}/g, ' ')}`)
     }
   } catch (e) {
