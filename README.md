@@ -5,18 +5,22 @@ Script to automatically book a tennis court (on https://tennis.paris.fr)
 Credit goes to [Bertrand d'Aure](https://github.com/bertrandda) who built [par-ici-tennis](https://github.com/bertrandda/par-ici-tennis) in the first place.
 
 ## Before you start
-Make sure to buy tickets on Paris tennis website to avoid errors such as the following:
+Make sure to buy tickets on Paris Tennis website to avoid errors such as the following:
 ```
+locator.click: Timeout 30000ms exceeded.
 =========================== logs ===========================
 waiting for event [paymentmode="existingTicket"]
 ============================================================
+    at bookTennis (/.../index.js:93:42) {
+  name: 'TimeoutError'
+}
 
 ```
-##### How to?
-(1) Book a court on Paris Tennis the normal way.
-Select one similar to your future bookings:
-- Full price or with a discount
-- Indoor or Outdoor
+#### How to buy tickets on Paris Tennis?
+(1) Book a court the normal way as you would do normally
+Search one similar to your future bookings in terms of:
+- Price: With or without discount
+- Setup: Indoor or Outdoor
 
 (2) On the payment page buy multiples tickets (3 to 10 hours)
 
